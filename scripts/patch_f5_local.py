@@ -89,6 +89,12 @@ def patch_utils() -> None:
     text = original
     text = replace_once(text, "import re\n", "import re\nimport subprocess\n", "utils subprocess import")
     text = replace_once(text, "import numpy as np\n", "import numpy as np\nimport soundfile as sf\n", "utils soundfile import")
+    text = replace_once(
+        text,
+        "cross_fade_duration = 0.15\n",
+        "cross_fade_duration = 0.15\ngenerated_leading_trim_ms = 180\n",
+        "utils generated leading trim setting",
+    )
 
     conversion_block = '''\n    source_audio = ref_audio_orig\n    try:\n        import imageio_ffmpeg\n\n        with tempfile.NamedTemporaryFile(suffix=".wav", **tempfile_kwargs) as f:\n            converted_source = f.name\n        subprocess.run(\n            [\n                imageio_ffmpeg.get_ffmpeg_exe(),\n                "-y",\n                "-i",\n                ref_audio_orig,\n                "-ar",\n                str(target_sample_rate),\n                "-ac",\n                "1",\n                converted_source,\n            ],\n            check=True,\n            stdout=subprocess.DEVNULL,\n            stderr=subprocess.DEVNULL,\n        )\n        source_audio = converted_source\n    except Exception:\n        source_audio = ref_audio_orig\n'''
     if "source_audio = ref_audio_orig" not in text:
@@ -98,6 +104,15 @@ def patch_utils() -> None:
     text = text.replace(
         "    audio, sr = torchaudio.load(ref_audio)\n",
         '    audio_np, sr = sf.read(ref_audio, dtype="float32", always_2d=True)\n    audio = torch.from_numpy(audio_np.T)\n',
+    )
+    text = text.replace("        text_list = [ref_text + gen_text]\n", '        text_list = [ref_text.rstrip() + " " + gen_text.lstrip()]\n')
+    text = text.replace(
+        "            generated_wave = generated_wave.squeeze().cpu().numpy()\n\n        return generated_wave, generated\n",
+        "            generated_wave = generated_wave.squeeze().cpu().numpy()\n"
+        "            leading_trim_samples = int(generated_leading_trim_ms * target_sample_rate / 1000)\n"
+        "            if 0 < leading_trim_samples < len(generated_wave):\n"
+        "                generated_wave = generated_wave[leading_trim_samples:]\n\n"
+        "        return generated_wave, generated\n",
     )
 
     if text != original:
