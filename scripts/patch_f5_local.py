@@ -76,7 +76,8 @@ def patch_gradio() -> None:
 
     text = text.replace("            final_wave, _ = torchaudio.load(f.name)\n", '            final_wave, _ = sf.read(f.name, dtype="float32")\n')
     text = text.replace("        final_wave = final_wave.squeeze().cpu().numpy()\n", "        final_wave = np.squeeze(final_wave)\n")
-    text = text.replace("            value=32,\n", "            value=8,\n", 1)
+    text = text.replace("            value=32,\n", "            value=16,\n", 1)
+    text = text.replace("            value=8,\n", "            value=16,\n", 1)
     text = text.replace("            value=0.15,\n", "            value=0.0,\n", 1)
 
     if text != original:
