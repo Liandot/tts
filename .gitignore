@@ -1,0 +1,13 @@
+.venv*/
+__pycache__/
+*.pyc
+
+# Local model weights, generated media, and private voice samples
+models/*
+outputs/*
+samples/*
+
+# Keep the folders present through placeholder files
+!models/.gitkeep
+!outputs/.gitkeep
+!samples/.gitkeep
